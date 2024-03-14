@@ -2,6 +2,7 @@ package misc
 
 import (
 	"math/rand"
+	"sort"
 	"strings"
 	"unicode"
 )
@@ -111,4 +112,15 @@ func Capitalize(str string) string {
 	runes := []rune(str)
 	runes[0] = unicode.ToUpper(runes[0])
 	return string(runes)
+}
+
+func SearchStrings(x string, sorted bool, slice ...string) int {
+	if !sorted {
+		sort.Strings(slice)
+	}
+	i := sort.SearchStrings(slice, x)
+	if i < len(slice) && slice[i] == x {
+		return i
+	}
+	return -1
 }
