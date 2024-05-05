@@ -24,7 +24,11 @@ func Now() Timestamp {
 
 // UnmarshalJSON 将毫秒数转换成 time.Time
 func (j *Timestamp) UnmarshalJSON(data []byte) error {
-	millis, err := strconv.ParseInt(string(data), 10, 64)
+	str := strings.Trim(string(data), `"`)
+	if str == "" {
+		return nil
+	}
+	millis, err := strconv.ParseInt(str, 10, 64)
 	if err != nil {
 		return err
 	}
@@ -41,7 +45,11 @@ func (j *Timestamp) MarshalJSON() ([]byte, error) {
 }
 
 func (d *Date) UnmarshalJSON(data []byte) error {
-	dt, err := ParseTime("yyyy-MM-dd", strings.Trim(string(data), `"`))
+	str := strings.Trim(string(data), `"`)
+	if str == "" {
+		return nil
+	}
+	dt, err := ParseTime("yyyy-MM-dd", str)
 	if err != nil {
 		return err
 	}
@@ -50,12 +58,20 @@ func (d *Date) UnmarshalJSON(data []byte) error {
 }
 
 func (d *Date) MarshalJSON() ([]byte, error) {
-	dt := FormatTime("yyyy-MM-dd", time.Time(*d))
-	return []byte(fmt.Sprintf("%q", dt)), nil
+	if time.Time(*d).IsZero() {
+		return []byte(fmt.Sprintf("%q", "")), nil
+	}
+	return []byte(fmt.Sprintf("%q", time.Time(*d).Format("2006-01-02"))), nil
+	// dt := FormatTime("yyyy-MM-dd", time.Time(*d))
+	// return []byte(fmt.Sprintf("%q", dt)), nil
 }
 
 func (d *DateTime) UnmarshalJSON(data []byte) error {
-	dt, err := ParseTime("yyyy-MM-dd HH:mm:ss", strings.Trim(string(data), `"`))
+	str := strings.Trim(string(data), `"`)
+	if str == "" {
+		return nil
+	}
+	dt, err := ParseTime("yyyy-MM-dd HH:mm:ss", str)
 	if err != nil {
 		return err
 	}
@@ -64,12 +80,20 @@ func (d *DateTime) UnmarshalJSON(data []byte) error {
 }
 
 func (d *DateTime) MarshalJSON() ([]byte, error) {
-	dt := FormatTime("yyyy-MM-dd HH:mm:ss", time.Time(*d))
-	return []byte(fmt.Sprintf("%q", dt)), nil
+	// dt := FormatTime("yyyy-MM-dd HH:mm:ss", time.Time(*d))
+	if time.Time(*d).IsZero() {
+		return []byte(fmt.Sprintf("%q", "")), nil
+	}
+	return []byte(fmt.Sprintf("%q", time.Time(*d).Format("2006-01-02 15:04:05"))), nil
+	// return []byte(fmt.Sprintf("%q", dt)), nil
 }
 
 func (t *Time) UnmarshalJSON(data []byte) error {
-	dt, err := ParseTime("HH:mm:ss", strings.Trim(string(data), `"`))
+	str := strings.Trim(string(data), `"`)
+	if str == "" {
+		return nil
+	}
+	dt, err := ParseTime("HH:mm:ss", str)
 	if err != nil {
 		return err
 	}
@@ -78,8 +102,12 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 }
 
 func (t *Time) MarshalJSON() ([]byte, error) {
-	dt := FormatTime("HH:mm:ss", time.Time(*t))
-	return []byte(fmt.Sprintf("%q", dt)), nil
+	if time.Time(*t).IsZero() {
+		return []byte(fmt.Sprintf("%q", "")), nil
+	}
+	return []byte(fmt.Sprintf("%q", time.Time(*t).Format("15:04:05"))), nil
+	// dt := FormatTime("HH:mm:ss", time.Time(*t))
+	// return []byte(fmt.Sprintf("%q", dt)), nil
 }
 
 // ToTime 转换成golang的Time
