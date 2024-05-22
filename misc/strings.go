@@ -124,3 +124,12 @@ func SearchStrings(x string, sorted bool, slice ...string) int {
 	}
 	return -1
 }
+
+// convert []string to []any
+func StringsToAny(v ...string) []any {
+	r := make([]any, len(v))
+	for i, j := range v {
+		r[i] = j
+	}
+	return r
+}

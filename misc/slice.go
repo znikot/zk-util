@@ -250,3 +250,12 @@ func ExistsInt64(x int64, sorted bool, a ...int64) bool {
 	}
 	return false
 }
+
+// convert []int64 to []any
+func Int64sToAny(a ...int64) []any {
+	b := make([]any, len(a))
+	for i, v := range a {
+		b[i] = v
+	}
+	return b
+}

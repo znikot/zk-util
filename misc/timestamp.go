@@ -57,11 +57,19 @@ func (d *Date) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (d *Date) Format() string {
+	return time.Time(*d).Format("2006-01-02")
+}
+
+func (d *Date) IsZero() bool {
+	return time.Time(*d).IsZero()
+}
+
 func (d *Date) MarshalJSON() ([]byte, error) {
 	if time.Time(*d).IsZero() {
 		return []byte(fmt.Sprintf("%q", "")), nil
 	}
-	return []byte(fmt.Sprintf("%q", time.Time(*d).Format("2006-01-02"))), nil
+	return []byte(fmt.Sprintf("%q", d.Format())), nil
 	// dt := FormatTime("yyyy-MM-dd", time.Time(*d))
 	// return []byte(fmt.Sprintf("%q", dt)), nil
 }
@@ -79,12 +87,20 @@ func (d *DateTime) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (d *DateTime) Format() string {
+	return time.Time(*d).Format("2006-01-02 15:04:05")
+}
+
+func (d *DateTime) IsZero() bool {
+	return time.Time(*d).IsZero()
+}
+
 func (d *DateTime) MarshalJSON() ([]byte, error) {
 	// dt := FormatTime("yyyy-MM-dd HH:mm:ss", time.Time(*d))
 	if time.Time(*d).IsZero() {
 		return []byte(fmt.Sprintf("%q", "")), nil
 	}
-	return []byte(fmt.Sprintf("%q", time.Time(*d).Format("2006-01-02 15:04:05"))), nil
+	return []byte(fmt.Sprintf("%q", d.Format())), nil
 	// return []byte(fmt.Sprintf("%q", dt)), nil
 }
 
@@ -101,11 +117,19 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (t *Time) Format() string {
+	return time.Time(*t).Format("15:04:05")
+}
+
+func (t *Time) IsZero() bool {
+	return time.Time(*t).IsZero()
+}
+
 func (t *Time) MarshalJSON() ([]byte, error) {
 	if time.Time(*t).IsZero() {
 		return []byte(fmt.Sprintf("%q", "")), nil
 	}
-	return []byte(fmt.Sprintf("%q", time.Time(*t).Format("15:04:05"))), nil
+	return []byte(fmt.Sprintf("%q", t.Format())), nil
 	// dt := FormatTime("HH:mm:ss", time.Time(*t))
 	// return []byte(fmt.Sprintf("%q", dt)), nil
 }
