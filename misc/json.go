@@ -1,9 +1,10 @@
 package misc
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
+
+	"github.com/goccy/go-json"
 )
 
 // marshal obj to json and print to stdout

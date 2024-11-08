@@ -3,7 +3,6 @@ package kttp
 import (
 	"bytes"
 	"crypto/tls"
-	"encoding/json"
 	"io"
 	"log"
 	"mime"
@@ -16,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/goccy/go-json"
 
 	"github.com/anaskhan96/soup"
 	"github.com/google/uuid"

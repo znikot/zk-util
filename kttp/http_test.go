@@ -11,7 +11,8 @@ import (
 
 func TestGet(t *testing.T) {
 	TransportOptions(WithConnectTimeout(1000 * time.Millisecond))
-	resp, err := NewRequest().Get("https://www.baidu.com", nil)
+	TransportOptions(WithInsecureSkipVerify(true))
+	resp, err := NewRequest().Get("https://bing.img.run/rand.php", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

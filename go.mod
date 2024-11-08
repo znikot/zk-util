@@ -4,6 +4,7 @@ go 1.21.5
 
 require (
 	github.com/anaskhan96/soup v1.2.5
+	github.com/goccy/go-json v0.10.3
 	github.com/google/uuid v1.5.0
 	github.com/spf13/cast v1.6.0
 	github.com/stretchr/testify v1.6.1

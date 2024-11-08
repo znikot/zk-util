@@ -114,6 +114,9 @@ func Capitalize(str string) string {
 	return string(runes)
 }
 
+// 在 slice 中搜索 x。返回 x 在 slice 中的索引，如果 x 不在 slice 中，返回 -1。
+//
+// 通过 sorted 指定 slice 是否已经排序，sorted = false 时会先进行排序
 func SearchStrings(x string, sorted bool, slice ...string) int {
 	if !sorted {
 		sort.Strings(slice)

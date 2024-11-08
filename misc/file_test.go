@@ -20,4 +20,10 @@ func TestResolveFilePath(t *testing.T) {
 
 	p = "~/user/kinz/test.txt"
 	fmt.Printf("path %s: %s\n", p, ResolveFilePath(p))
+
+	p = "./user/kinz/test.txt"
+	fmt.Printf("path %s: %s\n", p, ResolveFilePath(p))
+
+	p = "../../user/kinz/test.txt"
+	fmt.Printf("path %s: %s\n", p, ResolveFilePath(p))
 }
