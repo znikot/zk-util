@@ -50,13 +50,13 @@ func PrivateDecrypt(key *rsa.PrivateKey, src []byte) ([]byte, error) {
 }
 
 // encrypt data with pem public key
-func PublicEncrypt(key string, src []byte) ([]byte, error) {
-	pubKey, err := ParsePublicKey([]byte(key))
-	if err != nil {
-		return nil, err
-	}
+func PublicEncrypt(key *rsa.PublicKey, src []byte) ([]byte, error) {
+	// pubKey, err := ParsePublicKey([]byte(key))
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	return doFinal(src, modePublicEncrypt, pubKey)
+	return doFinal(src, modePublicEncrypt, key)
 }
 
 // decrypt data with pem public key
