@@ -4,15 +4,13 @@ import (
 	"bytes"
 	"crypto/tls"
 	"io"
-	"log"
 	"mime"
 	"mime/multipart"
 	"net"
 	"net/http"
-	urlpkg "net/url"
+	"net/url"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -23,10 +21,8 @@ import (
 	"github.com/spf13/cast"
 )
 
-var ()
-
-type Form urlpkg.Values
-type MultiPartForm urlpkg.Values
+type Form url.Values
+type MultiPartForm url.Values
 
 type Option func(tp *http.Transport)
 
@@ -128,25 +124,32 @@ func TransportOptions(opts ...Option) {
 type Request struct {
 	raw    *http.Request
 	client *http.Client
+
+	header http.Header
 }
 
 // create new http request with default http client.
-func NewRequest() *Request {
-	r := &Request{}
-	r.raw, _ = http.NewRequest("", "", nil)
+func NewRequest(url string, vars PathVar, body any) *Request {
+	r := &Request{
+		header: make(http.Header),
+	}
+
+	url = FillPathVariables(url, vars)
+
+	r.raw, _ = http.NewRequest("", url, r.body(body))
 
 	return r.WithClient(httpClient)
 }
 
 // set request header
 func (r *Request) SetHeader(name, value string) *Request {
-	r.raw.Header.Set(name, value)
+	r.header.Set(name, value)
 	return r
 }
 
 // add request header
 func (r *Request) AddHeader(name, value string) *Request {
-	r.raw.Header.Add(name, value)
+	r.header.Add(name, value)
 	return r
 }
 
@@ -158,7 +161,7 @@ func (r *Request) AddCookie(cookie *http.Cookie) *Request {
 
 // delete header
 func (r *Request) DelHeader(name string) *Request {
-	r.raw.Header.Del(name)
+	r.header.Del(name)
 	return r
 }
 
@@ -178,64 +181,67 @@ func (r *Request) WithClient(client *http.Client) *Request {
 }
 
 // set body for post, put
-func (r *Request) Body(v any) *Request {
+func (r *Request) body(v any) io.Reader {
 	if v == nil {
-		return r
+		return nil
 	}
 
 	switch v := v.(type) {
-	case io.ReadCloser:
-		r.raw.Body = v
+	case io.Reader:
+		// r.raw.Body = v
+		return v
 	case []byte:
-		r.bytesBody(v)
+		return r.bytesBody(v)
 	case string:
-		r.bytesBody([]byte(v))
+		return r.bytesBody([]byte(v))
 	case Form:
-		r.formBody(v)
+		return r.formBody(v)
 	case MultiPartForm:
-		r.multiFormBody(v)
+		return r.multiFormBody(v)
 	default:
-		r.jsonBody(v)
+		return r.jsonBody(v)
 	}
-
-	return r
 }
 
 // bytes body
-func (r *Request) bytesBody(bodyBytes []byte) {
+func (r *Request) bytesBody(bodyBytes []byte) io.Reader {
 	if l := len(bodyBytes); l > 0 {
-		reader := bytes.NewReader(bodyBytes)
-		r.raw.Body = io.NopCloser(reader)
-		r.SetHeader("Content-Length", strconv.Itoa(l))
+		return bytes.NewBuffer(bodyBytes)
+		// reader := bytes.NewReader(bodyBytes)
+		// r.raw.Body = io.NopCloser(reader)
+		// r.SetHeader("Content-Length", strconv.Itoa(l))
 	}
+	return nil
 }
 
 // json body
-func (r *Request) jsonBody(v any) {
+func (r *Request) jsonBody(v any) io.Reader {
 	// convert to json
 	bodyBytes, err := json.Marshal(v)
 	if err != nil {
-		return
+		return nil
 	}
-	r.bytesBody(bodyBytes)
+	// r.bytesBody(bodyBytes)
 	// set content type to json
 	r.SetHeader("Content-Type", "application/json; charset=utf-8")
+
+	return r.bytesBody(bodyBytes)
 }
 
 // form body
-func (r *Request) formBody(form Form) {
-	params := urlpkg.Values{}
+func (r *Request) formBody(form Form) io.Reader {
+	params := url.Values{}
 	for k, v := range form {
 		for _, vi := range v {
 			params.Add(k, cast.ToString(vi))
 		}
 	}
-	r.bytesBody([]byte(params.Encode()))
 	r.SetHeader("Content-Type", "application/x-www-form-urlencoded")
+	return r.bytesBody([]byte(params.Encode()))
 }
 
 // multipart form body
-func (r *Request) multiFormBody(form MultiPartForm) {
+func (r *Request) multiFormBody(form MultiPartForm) io.Reader {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	// add file part
@@ -255,57 +261,46 @@ func (r *Request) multiFormBody(form MultiPartForm) {
 	}
 	writer.Close()
 
-	r.raw.Body = io.NopCloser(body)
+	// r.raw.Body = io.NopCloser(body)
 
 	r.AddHeader("Content-Type", writer.FormDataContentType())
+
+	return body
 }
 
 // do get
-func (r *Request) Get(url string, pathvar map[string]string) (*Response, error) {
+func (r *Request) Get() (*Response, error) {
 	r.raw.Method = http.MethodGet
-	r.setUrl(url, pathvar)
-
+	r.raw.Header = r.header
 	return r.do()
 }
 
 // do post
-func (r *Request) Post(url string, pathvar map[string]string) (*Response, error) {
+func (r *Request) Post() (*Response, error) {
 	r.raw.Method = http.MethodPost
-	r.setUrl(url, pathvar)
-
+	r.raw.Header = r.header
 	return r.do()
 }
 
 // do put
-func (r *Request) Put(url string, pathvar map[string]string) (*Response, error) {
+func (r *Request) Put() (*Response, error) {
 	r.raw.Method = http.MethodPut
-	r.setUrl(url, pathvar)
+	r.raw.Header = r.header
 	return r.do()
 }
 
 // do patch
-func (r *Request) Patch(url string, pathvar map[string]string) (*Response, error) {
+func (r *Request) Patch() (*Response, error) {
 	r.raw.Method = http.MethodPatch
-	r.setUrl(url, pathvar)
+	r.raw.Header = r.header
 	return r.do()
 }
 
 // do delete
-func (r *Request) Delete(url string, pathvar map[string]string) (*Response, error) {
+func (r *Request) Delete() (*Response, error) {
 	r.raw.Method = http.MethodDelete
-	r.setUrl(url, pathvar)
-
+	r.raw.Header = r.header
 	return r.do()
-}
-
-func (r *Request) setUrl(url string, pathvars map[string]string) {
-	url = FillPathVariables(url, pathvars)
-	// fmt.Printf("set url: %s\n", url)
-	var err error
-	r.raw.URL, err = urlpkg.Parse(url)
-	if err != nil {
-		log.Printf("invalid url: %s, %v", url, err)
-	}
 }
 
 func (r *Request) do() (*Response, error) {

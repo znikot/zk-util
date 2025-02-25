@@ -12,7 +12,7 @@ import (
 func TestGet(t *testing.T) {
 	TransportOptions(WithConnectTimeout(1000 * time.Millisecond))
 	TransportOptions(WithInsecureSkipVerify(true))
-	resp, err := NewRequest().Get("https://bing.img.run/rand.php", nil)
+	resp, err := NewRequest("https://bing.img.run/rand.php", nil, nil).Get()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +26,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestPost(t *testing.T) {
-	resp, err := NewRequest().Post("https://www.baidu.com/?search=golang", nil)
+	resp, err := NewRequest("https://www.baidu.com/?search=golang", nil, nil).Post()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func TestPost(t *testing.T) {
 }
 
 func TestAsDocument(t *testing.T) {
-	resp, err := NewRequest().Get("https://www.baidu.com", nil)
+	resp, err := NewRequest("https://www.baidu.com", nil, nil).Get()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func TestAsDocument(t *testing.T) {
 }
 
 func TestAsFile(t *testing.T) {
-	resp, err := NewRequest().Get("https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_92x30dp.png", nil)
+	resp, err := NewRequest("https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_92x30dp.png", nil, nil).Get()
 	if err != nil {
 		t.Fatal(err)
 	}
