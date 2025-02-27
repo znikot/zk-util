@@ -3,12 +3,13 @@ package misc
 import (
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/goccy/go-json"
 )
 
 // marshal obj to json and print to stdout
-func PrintJSON(obj interface{}, beauty bool) {
+func PrintJSON(obj any, beauty bool) {
 	var str []byte
 	var err error
 
@@ -26,7 +27,7 @@ func PrintJSON(obj interface{}, beauty bool) {
 }
 
 // marshal obj to json and print to stdout with pretty
-func PrintJSONPretty(obj interface{}) {
+func PrintJSONPretty(obj any) {
 	PrintJSON(obj, true)
 }
 
@@ -35,6 +36,19 @@ func ReadJSON(reader io.Reader, obj any) (err error) {
 	err = json.NewDecoder(reader).Decode(obj)
 
 	return
+}
+
+// read data from json file and unmarshal to v
+//
+// filePath will resolve width function ResolveFilePath(string)
+func ReadJSONFile(filePath string, v any) error {
+	jsonFile, err := os.Open(ResolveFilePath(filePath))
+	if err != nil {
+		return err
+	}
+	defer jsonFile.Close()
+
+	return ReadJSON(jsonFile, v)
 }
 
 // marshal anything to json string
