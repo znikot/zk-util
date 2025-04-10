@@ -159,7 +159,7 @@ func ToTimestamp(t time.Time) Timestamp {
 }
 
 func FormatTime(layout string, time time.Time) string {
-	return time.Format(parseLayout(layout))
+	return time.Format(ParseTimeLayout(layout))
 }
 
 // ParseTime 转换时间
@@ -174,10 +174,20 @@ func ParseTime(layout, value string) (time.Time, error) {
 			value = value[0:idx] + "." + value[idx:]
 		}
 	}
-	return time.ParseInLocation(parseLayout(layout), value, time.Local)
+	return time.ParseInLocation(ParseTimeLayout(layout), value, time.Local)
 }
 
-func parseLayout(layout string) string {
+// ParseTimeLayout 解析时间格式
+// 将时间格式转换为golang的时间格式
+// 例如：
+//
+//	"yyyy-MM-dd HH:mm:ss" -> "2006-01-02 15:04:05"
+//	"yyyy-MM-dd" -> "2006-01-02"
+//	"HH:mm:ss" -> "15:04:05"
+//	"yyyy" -> "2006"
+//	"yy" -> "06"
+//	"MM" -> "01"
+func ParseTimeLayout(layout string) string {
 	layout = strings.Replace(layout, "yyyy", "2006", 1)
 	layout = strings.Replace(layout, "yy", "06", 1)
 	layout = strings.Replace(layout, "MM", "01", 1)
