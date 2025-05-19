@@ -53,37 +53,38 @@ var (
 	err_target_not_map = errors.New("target parameter is not a map")
 )
 
-func any2string(i any, targetType reflect.Type) any {
-	return cast.ToString(i)
+func any2string(i any, targetType reflect.Type) (any, error) {
+	return cast.ToString(i), nil
 }
 
-func any2int(s any, targetType reflect.Type) any {
-	return cast.ToInt(s)
+func any2int(s any, targetType reflect.Type) (any, error) {
+	return cast.ToInt(s), nil
 }
 
-func any2int64(s any, targetType reflect.Type) any {
-	return cast.ToInt64(s)
+func any2int64(s any, targetType reflect.Type) (any, error) {
+	return cast.ToInt64(s), nil
 }
 
-func any2float32(s any, targetType reflect.Type) any {
-	return cast.ToFloat32(s)
+func any2float32(s any, targetType reflect.Type) (any, error) {
+	return cast.ToFloat32(s), nil
 }
-func any2float64(s any, targetType reflect.Type) any {
-	return cast.ToFloat32(s)
+func any2float64(s any, targetType reflect.Type) (any, error) {
+	return cast.ToFloat32(s), nil
 }
 
-func struct2struct(s any, targetType reflect.Type) any {
+func struct2struct(s any, targetType reflect.Type) (any, error) {
 	// using json
-	return s
+	return s, nil
 }
 
 // convert map to struct
-func map2struct(src any, targetType reflect.Type) any {
+func map2struct(src any, targetType reflect.Type) (any, error) {
 	// assert src to map
 	srcMap, ok := src.(map[string]any)
 	if !ok {
-		panic(err_src_not_map)
+		return nil, err_src_not_map
 	}
+	var err error
 	// new struct
 	target := reflect.New(targetType)
 
@@ -115,13 +116,22 @@ func map2struct(src any, targetType reflect.Type) any {
 			if found {
 				_, isMap := mapVal.(map[string]any)
 				if isMap {
-					tv = map2struct(mapVal, field.Type)
+					tv, err = map2struct(mapVal, field.Type)
+					if err != nil {
+						return nil, err
+					}
 				} else {
 					// tv = map2struct(src, field.Type)
-					tv = CastAny(mapVal, field.Type)
+					tv, err = CastAny(mapVal, field.Type)
+					if err != nil {
+						return nil, err
+					}
 				}
 			} else {
-				tv = map2struct(src, field.Type)
+				tv, err = map2struct(src, field.Type)
+				if err != nil {
+					return nil, err
+				}
 			}
 			if tv != nil {
 				fieldVal.Set(reflect.ValueOf(tv))
@@ -132,7 +142,10 @@ func map2struct(src any, targetType reflect.Type) any {
 			mapVal, ok := findMapValue(field.Name)
 			if ok {
 				// map value found, convert and set to field value
-				tv := CastAny(mapVal, fieldVal.Type())
+				tv, err := CastAny(mapVal, fieldVal.Type())
+				if err != nil {
+					return nil, err
+				}
 				if tv != nil {
 					fieldVal.Set(reflect.ValueOf(tv))
 				}
@@ -140,24 +153,27 @@ func map2struct(src any, targetType reflect.Type) any {
 		}
 	}
 
-	return target.Elem().Interface()
+	return target.Elem().Interface(), nil
 }
 
-func struct2map(src any, targetType reflect.Type) any {
+func struct2map(src any, targetType reflect.Type) (any, error) {
 	// log.Debugf("", "converting from %s to map", reflect.TypeOf(src).Name())
 	t := reflect.TypeOf(src)
 	v := reflect.ValueOf(src)
-
+	var err error
 	var target = make(map[string]interface{})
 	for i := 0; i < t.NumField(); i++ {
 		val := v.Field(i)
 		if IsPrimType(val.Type()) {
 			target[t.Field(i).Name] = val.Interface()
 		} else if val.Type().Kind() == reflect.Struct {
-			target[t.Field(i).Name] = struct2map(val.Interface(), val.Type())
+			target[t.Field(i).Name], err = struct2map(val.Interface(), val.Type())
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
-	return target
+	return target, nil
 }
 
 func struct2pointer(src any, targetType reflect.Type) any {
@@ -165,7 +181,7 @@ func struct2pointer(src any, targetType reflect.Type) any {
 }
 
 // convert between two slice
-func slice2slice(src any, targetType reflect.Type) any {
+func slice2slice(src any, targetType reflect.Type) (any, error) {
 	// assert src to slice
 	srcSlice, ok := src.([]any)
 	if !ok {
@@ -178,14 +194,18 @@ func slice2slice(src any, targetType reflect.Type) any {
 		//target.Index(i).Set(reflect.ValueOf(srcSlice[i]))
 		srcVal := srcSlice[i]
 		// convert it
-		target.Index(i).Set(reflect.ValueOf(CastAny(srcVal, targetType.Elem())))
+		tv, err := CastAny(srcVal, targetType.Elem())
+		if err != nil {
+			return nil, err
+		}
+		target.Index(i).Set(reflect.ValueOf(tv))
 	}
 
-	return target.Interface()
+	return target.Interface(), nil
 }
 
 // convert between two map
-func map2map(src any, targetType reflect.Type) any {
+func map2map(src any, targetType reflect.Type) (any, error) {
 	_srcType := reflect.TypeOf(src)
 	if _srcType.Kind() == reflect.Pointer {
 		_srcType = _srcType.Elem()
@@ -211,12 +231,18 @@ func map2map(src any, targetType reflect.Type) any {
 		v := srcVal.MapIndex(k)
 
 		// convert key and value to target type
-		tk := CastAny(k.Interface(), keyType)
-		tv := CastAny(v.Interface(), valueType)
+		tk, err := CastAny(k.Interface(), keyType)
+		if err != nil {
+			return nil, err
+		}
+		tv, err := CastAny(v.Interface(), valueType)
+		if err != nil {
+			return nil, err
+		}
 
 		// set key and value to target map
 		target.SetMapIndex(reflect.ValueOf(tk), reflect.ValueOf(tv))
 	}
 
-	return target.Interface()
+	return target.Interface(), nil
 }

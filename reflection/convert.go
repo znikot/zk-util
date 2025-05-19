@@ -7,9 +7,9 @@ import (
 	"sync"
 )
 
-type _kind_converter func(src any, _type reflect.Type) any
+type _kind_converter func(src any, _type reflect.Type) (any, error)
 
-type _type_converter func(src any) any
+type _type_converter func(src any) (any, error)
 
 var (
 	_kind_converters = make(map[reflect.Kind]map[reflect.Kind]_kind_converter)
@@ -23,18 +23,20 @@ var (
 	err_ptr_needed              = errors.New("parameter target must be pointer")
 )
 
-func Cast[T any](src any) T {
+func Cast[T any](src any) (T, error) {
 	var t T
 	_type := reflect.TypeOf(t)
 
-	target := CastAny(src, _type)
-
-	return target.(T)
+	target, err := CastAny(src, _type)
+	if err != nil {
+		return t, err
+	}
+	return target.(T), nil
 }
 
-func CastAny(src any, _type reflect.Type) any {
+func CastAny(src any, _type reflect.Type) (any, error) {
 	if src == nil {
-		return nil
+		return nil, nil
 	}
 	_srcType := reflect.TypeOf(src)
 	if _srcType.Kind() == reflect.Ptr {
@@ -42,7 +44,7 @@ func CastAny(src any, _type reflect.Type) any {
 	}
 
 	if _srcType == _type || _type.Kind() == reflect.Interface /*|| path.Join(_srcType.PkgPath(), _srcType.Name()) == path.Join(_type.PkgPath(), _type.Name())*/ {
-		return src
+		return src, nil
 	}
 
 	tts, ok := _type_converters[_srcType]

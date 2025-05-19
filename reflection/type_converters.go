@@ -16,9 +16,12 @@ func init() {
 }
 
 // float64 -> misc.Timestamp
-func float642MiscTimestamp(src any) any {
-	millis := Cast[int64](src)
-	return misc.Timestamp(time.Unix(0, millis*int64(time.Millisecond)))
+func float642MiscTimestamp(src any) (any, error) {
+	millis, err := Cast[int64](src)
+	if err != nil {
+		return nil, err
+	}
+	return misc.Timestamp(time.Unix(0, millis*int64(time.Millisecond))), nil
 }
 
 // string --> misc.Timestamp
@@ -36,14 +39,14 @@ func parseDate[T misc.Timestamp | misc.Date | misc.DateTime](src any) (t T) {
 	return
 }
 
-func string2MiscTimestamp(src any) any {
-	return parseDate[misc.Timestamp](src)
+func string2MiscTimestamp(src any) (any, error) {
+	return parseDate[misc.Timestamp](src), nil
 }
 
-func string2MiscDate(src any) any {
-	return parseDate[misc.Date](src)
+func string2MiscDate(src any) (any, error) {
+	return parseDate[misc.Date](src), nil
 }
 
-func string2MiscDateTime(src any) any {
-	return parseDate[misc.DateTime](src)
+func string2MiscDateTime(src any) (any, error) {
+	return parseDate[misc.DateTime](src), nil
 }

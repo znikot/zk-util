@@ -40,7 +40,11 @@ func SetElemByPath(target any, path string, val any) (err error) {
 		}
 		// 如果是最后一个元素，那么就设置值
 		if isLastElem {
-			targetValue.SetMapIndex(reflect.ValueOf(currElemKey), reflect.ValueOf(CastAny(val, targetType.Elem())))
+			tv, err := CastAny(val, targetType.Elem())
+			if err != nil {
+				return err
+			}
+			targetValue.SetMapIndex(reflect.ValueOf(currElemKey), reflect.ValueOf(tv))
 		} else {
 			// 中间元素，如果中间元素是 nil，那么需要创建一个新的
 			middleValue := targetValue.MapIndex(reflect.ValueOf(currElemKey))

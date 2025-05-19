@@ -453,7 +453,10 @@ func (f *FieldInfo) SetValue(obj reflect.Value, val any) {
 }
 
 func setFieldValue(refVal reflect.Value, val interface{}) {
-	val = CastAny(val, refVal.Type())
+	val, err := CastAny(val, refVal.Type())
+	if err != nil {
+		panic(err)
+	}
 	refVal.Set(reflect.ValueOf(val))
 }
 
