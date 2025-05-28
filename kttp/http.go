@@ -246,7 +246,7 @@ func (r *Request) formBody(form Form) io.Reader {
 func (r *Request) multiFormBody(form MultiPartForm) io.Reader {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
-	fileReg := regexp.MustCompile(`^\[w+\]$`)
+	fileReg := regexp.MustCompile(`^\[.+\]$`)
 	// add file part
 	for k, v := range form {
 		if fileReg.MatchString(k) {
