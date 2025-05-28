@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -244,21 +246,25 @@ func (r *Request) formBody(form Form) io.Reader {
 func (r *Request) multiFormBody(form MultiPartForm) io.Reader {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
+	fileReg := regexp.MustCompile(`^\[w+\]$`)
 	// add file part
 	for k, v := range form {
-		if k == "[file]" {
-			part, _ := writer.CreateFormFile("file", "file_encode")
-			part.Write([]byte(v[0]))
-		}
-	}
-	//Adds additional parameters
-	for k, v := range form {
-		if k != "[file]" {
+		if fileReg.MatchString(k) {
+			part, _ := writer.CreateFormFile(k[1:len(k)-1], filepath.Base(v[0]))
+			localFile, err := os.Open(v[0])
+			if err != nil {
+				return nil
+			}
+			defer localFile.Close()
+			io.Copy(part, localFile)
+		} else {
+			//Adds additional parameters
 			for _, vi := range v {
 				writer.WriteField(k, cast.ToString(vi))
 			}
 		}
 	}
+
 	writer.Close()
 
 	// r.raw.Body = io.NopCloser(body)
